@@ -150,6 +150,8 @@ export class EnricoService {
       } catch (error) {
         throw new Error(error);
       }
+    } else if (!validDate) {
+      throw new Error('Date format is not valid, valid format is dd-mm-yyyy');
     } else {
       return dayStatus;
     }
