@@ -8,7 +8,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('MediaPark Node Task')
     .setDescription(
-      'The Node Task API has get requests, when using any of these get requests, the data if it doesnt exist in database will be pulled from <a href= "https://kayaposoft.com/enrico/">Enrico</a> and put into postgresSQL database, otherwise it will be taken from database. Code is uploaded to Github <a href= "https://github.com/G-Ruslanas/Node_Task">GitHub</a>',
+      'The Node Task API has get requests, when using any of these get requests, the data if it doesnt exist in database will be pulled from <a href= "https://kayaposoft.com/enrico/">Enrico</a> and put into postgresSQL database, otherwise it will be taken from database. Code is uploaded to <a href= "https://github.com/G-Ruslanas/Node_Task">GitHub</a>',
     )
     .setVersion('1.0')
     .build();
