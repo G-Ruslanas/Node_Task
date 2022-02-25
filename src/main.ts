@@ -8,10 +8,9 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('MediaPark Node Task')
     .setDescription(
-      'The Node Task API has get requests, when using any of these get requests, the data if it doesnt exist in database will be pulled from <a href= "enrico">https://kayaposoft.com/enrico/</a> and put into postgresSQL database. Code is uploaded to Github',
+      'The Node Task API has get requests, when using any of these get requests, the data if it doesnt exist in database will be pulled from <a href= "https://kayaposoft.com/enrico/">Enrico</a> and put into postgresSQL database, otherwise it will be taken from database. Code is uploaded to Github <a href= "https://github.com/G-Ruslanas/Node_Task">GitHub</a>',
     )
     .setVersion('1.0')
-    .addTag('node task')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
