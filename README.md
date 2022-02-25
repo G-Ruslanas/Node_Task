@@ -44,4 +44,4 @@ $ npm run test:cov
 
 ## License
 
-Project is [MIT licensed](LICENSE).
+Application is [MIT licensed](LICENSE).
