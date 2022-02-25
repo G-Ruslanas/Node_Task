@@ -13,7 +13,7 @@ export const Connection: TypeOrmModuleOptions = {
   port: 5432,
   username: process.env.USER,
   password: process.env.PASSWORD,
-  database: 'd6ruibk54lskah',
+  database: process.env.DATABASE,
   entities: [Countries, Holidays, Days, Max],
   synchronize: true,
   autoLoadEntities: true,

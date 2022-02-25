@@ -4,17 +4,10 @@ import { EnricoService } from './enrico.service';
 @Controller('enrico')
 export class EnricoController {
   constructor(private readonly enricoService: EnricoService) {}
+
   @Get('/countries')
   getAllCountries() {
     return this.enricoService.getAllCountries();
-  }
-
-  @Get('/year/:year/countrycode/:countryCode')
-  getMaxDays(
-    @Param('year') year: string,
-    @Param('countryCode') countryCode: string,
-  ) {
-    return this.enricoService.getMaxDays(year, countryCode);
   }
 
   @Get('/month/:month/year/:year/countrycode/:countryCode')
@@ -32,5 +25,13 @@ export class EnricoController {
     @Param('countryCode') countryCode: string,
   ) {
     return this.enricoService.getDayStatus(date, countryCode);
+  }
+
+  @Get('/year/:year/countrycode/:countryCode')
+  getMaxDays(
+    @Param('year') year: string,
+    @Param('countryCode') countryCode: string,
+  ) {
+    return this.enricoService.getMaxDays(year, countryCode);
   }
 }
