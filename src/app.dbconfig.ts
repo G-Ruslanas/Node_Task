@@ -9,6 +9,11 @@ export const Connection: TypeOrmModuleOptions = {
   ssl: {
     rejectUnauthorized: false,
   },
+  host: process.env.HOST,
+  port: 5432,
+  username: process.env.USER,
+  password: process.env.PASSWORD,
+  database: 'd6ruibk54lskah',
   entities: [Countries, Holidays, Days, Max],
   synchronize: true,
   autoLoadEntities: true,
