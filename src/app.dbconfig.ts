@@ -17,4 +17,12 @@ export const Connection: TypeOrmModuleOptions = {
   entities: [Countries, Holidays, Days, Max],
   synchronize: true,
   autoLoadEntities: true,
+  // type: 'postgres',
+  // host: 'localhost',
+  // port: 5433,
+  // username: 'user',
+  // password: '4a6d8s3j',
+  // database: 'MediaPark_Task',
+  // entities: [Countries, Holidays, Days, Max],
+  // synchronize: true,
 };

@@ -16,14 +16,3 @@ import { EnricoModule } from './enrico/enrico.module';
   providers: [AppService],
 })
 export class AppModule {}
-
-// TypeOrmModule.forRoot({
-//       type: 'postgres',
-//       host: 'localhost',
-//       port: 5433,
-//       username: 'user',
-//       password: '4a6d8s3j',
-//       database: 'MediaPark_Task',
-//       entities: [Countries, Holidays, Days, Max],
-//       synchronize: true,
-//     }),

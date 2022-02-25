@@ -95,6 +95,13 @@ export class EnricoService {
       isFreeDay: false,
     };
     let type: string = '';
+
+    const date_regex = /^(0[1-9]|[1-2][0-9]|3[0-1])-(0[1-9]|1[0-2])-[0-9]{4}$/;
+    let validDate: boolean = false;
+    if (date_regex.test(date)) {
+      validDate = true;
+    }
+
     let dateSplit: string[] = date.split('-');
     let reformatedDate = dateSplit[2] + '-' + dateSplit[1] + '-' + dateSplit[0];
 
@@ -103,7 +110,7 @@ export class EnricoService {
       date: reformatedDate,
     });
 
-    if (!dayStatus) {
+    if (!dayStatus && validDate) {
       try {
         const response = await fetch(
           `${process.env.URL}isPublicHoliday&date=${date}&country=${countryCode}`,
