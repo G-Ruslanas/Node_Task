@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 export class Days {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ unique: true })
+  @Column()
   date: string;
   @Column()
   countryCode: string;

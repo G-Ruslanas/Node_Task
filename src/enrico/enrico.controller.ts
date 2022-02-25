@@ -9,7 +9,7 @@ export class EnricoController {
     return this.enricoService.getAllCountries();
   }
 
-  @Get('/max/:year/:countryCode')
+  @Get('/year/:year/countrycode/:countryCode')
   getMaxDays(
     @Param('year') year: string,
     @Param('countryCode') countryCode: string,
@@ -17,16 +17,16 @@ export class EnricoController {
     return this.enricoService.getMaxDays(year, countryCode);
   }
 
-  @Get('/:month/:year/:countryCode')
+  @Get('/month/:month/year/:year/countrycode/:countryCode')
   getHolidaysByMonth(
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Param('month') month: string,
+    @Param('year') year: string,
     @Param('countryCode') countryCode: string,
   ) {
     return this.enricoService.getHolidaysByMonth(month, year, countryCode);
   }
 
-  @Get('/:date/:countryCode')
+  @Get('/date/:date/countrycode/:countryCode')
   getDays(
     @Param('date') date: string,
     @Param('countryCode') countryCode: string,

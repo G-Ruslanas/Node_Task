@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import fetch from 'cross-fetch';
-import { Repository } from 'typeorm';
-import { Country, DaysStatus, HolidaysByMonth, Max } from './enrico.model';
+import { type } from 'os';
+import { Like, Repository } from 'typeorm';
 import { Countries } from './entities/countries.entity';
 import { Days } from './entities/days.entity';
 import { Holidays } from './entities/holidays.entity';
+import { Max } from './entities/max.entity';
+import { DayType } from './static/action.enum';
 
 @Injectable()
 export class EnricoService {
@@ -18,189 +20,201 @@ export class EnricoService {
     @InjectRepository(Max) private readonly repositoryMax: Repository<Max>,
   ) {}
 
-  async getAllCountries() {
-    if ((await this.repositoryCountry.count()) == 0) {
+  async getAllCountries(): Promise<Countries[]> {
+    const counter: number = await this.repositoryCountry.count();
+
+    if (counter === 0) {
       try {
-        const countries: Country[] = [];
-        const response = await fetch(
-          'https://kayaposoft.com/enrico/json/v2.0/?action=getSupportedCountries',
-        );
+        const countries: Countries[] = [];
+
+        const response = await fetch(`${process.env.URL}getSupportedCountries`);
         const data = await response.json();
-        data.map((o) => {
-          const newCountry = new Country(o.countryCode, o.fullName);
-          countries.push(newCountry);
-        });
-        this.repositoryCountry.save(countries);
-        return countries;
+
+        for (const obj of data) {
+          countries.push(obj);
+        }
+
+        return this.repositoryCountry.save(countries);
       } catch (error) {
-        throw new Error('Unexpected error occurred');
+        throw new Error(error);
       }
     } else {
       console.log('Reading from Table countries');
-      return await this.repositoryCountry.find();
-    }
-  }
-  async getHolidaysByMonth(month: number, year: number, countryCode: string) {
-    const holidaysByMonth: HolidaysByMonth[] = [];
-    const query = await this.repositoryHolidays
-      .createQueryBuilder()
-      .select('holidays')
-      .from(Holidays, 'holidays')
-      .where('holidays.countryCode = :id', { id: countryCode })
-      .andWhere('holidays.date like :date', { date: `${year}-${month}-%` })
-      .getMany();
-    if (query.length === 0) {
-      try {
-        const response = await fetch(
-          `https://kayaposoft.com/enrico/json/v2.0?action=getHolidaysForYear&year=${year}&country=${countryCode}&holidayType=public_holiday`,
-        );
-        const data = await response.json();
-        data.map((o) => {
-          if (o.date.month == month) {
-            const date: string = year + '-' + month + '-' + o.date.day;
-            return o.name.map((n) => {
-              if (n.lang === 'en') {
-                const newHoliday = new HolidaysByMonth(
-                  countryCode,
-                  date,
-                  n.text,
-                  o.date.dayOfWeek,
-                );
-                holidaysByMonth.push(newHoliday);
-              }
-            });
-          }
-        });
-        await this.repositoryHolidays.save(holidaysByMonth);
-        return holidaysByMonth;
-      } catch (error) {
-        throw new Error('Unexpected error occurred');
-      }
-    } else {
-      console.log('Reading from Table holidays');
-      return query;
+      return this.repositoryCountry.find();
     }
   }
 
-  async getDayStatus(date: string, countryCode: string) {
-    let type: string = '';
+  async getHolidaysByMonth(
+    month: string,
+    year: string,
+    countryCode: string,
+  ): Promise<Holidays[]> {
+    const holidaysByMonth: Holidays[] = [];
+    const holidays = await this.repositoryHolidays.find({
+      date: Like(`${year}-${month}-%`),
+      countryCode: countryCode,
+    });
+
+    if (holidays.length === 0) {
+      try {
+        const response = await fetch(
+          `${process.env.URL}getHolidaysForYear&year=${year}&country=${countryCode}&holidayType=public_holiday`,
+        );
+        const data = await response.json();
+
+        for (const obj of data) {
+          const objMonth: number = obj.date.month;
+
+          if (objMonth === parseInt(month)) {
+            const date: string = year + '-' + month + '-' + obj.date.day;
+
+            holidaysByMonth.push(
+              this.repositoryHolidays.create({
+                countryCode,
+                date,
+                name: obj.name[1].text,
+                dayOfWeek: obj.date.dayOfWeek,
+              }),
+            );
+          }
+        }
+        return this.repositoryHolidays.save(holidaysByMonth);
+      } catch (error) {
+        throw new Error(error);
+      }
+    } else {
+      console.log('Reading from Table holidays');
+      return holidays;
+    }
+  }
+
+  async getDayStatus(date: string, countryCode: string): Promise<Days> {
     const result = {
       isPublicHoliday: false,
       isWorkDay: false,
       isFreeDay: false,
     };
+    let type: string = '';
     let dateSplit: string[] = date.split('-');
-    let reformDate = dateSplit[2] + '-' + dateSplit[1] + '-' + dateSplit[0];
-    const query = await this.repositoryDays
-      .createQueryBuilder()
-      .select('days')
-      .from(Days, 'days')
-      .where('days.countryCode = :id', { id: countryCode })
-      .andWhere('days.date = :date', { date: reformDate })
-      .getOne();
-    if (query === undefined) {
+    let reformatedDate = dateSplit[2] + '-' + dateSplit[1] + '-' + dateSplit[0];
+
+    const dayStatus = await this.repositoryDays.findOne({
+      countryCode: countryCode,
+      date: reformatedDate,
+    });
+
+    if (!dayStatus) {
       try {
         const response = await fetch(
-          `https://kayaposoft.com/enrico/json/v2.0/?action=isPublicHoliday&date=${date}&country=${countryCode}`,
+          `${process.env.URL}isPublicHoliday&date=${date}&country=${countryCode}`,
         );
         const data = await response.json();
-        result['isPublicHoliday'] = data.isPublicHoliday;
-        if (response.status === 200) {
-          const res = await fetch(
-            `https://kayaposoft.com/enrico/json/v2.0/?action=isWorkDay&date=${date}&country=${countryCode}`,
-          );
-          const data = await res.json();
-          result['isWorkDay'] = data.isWorkDay;
-          result['isPublicHoliday'] === true || result['isWorkDay'] === true
-            ? (result['isFreeDay'] = false)
-            : (result['isFreeDay'] = true);
+        result[DayType.IS_PUBLIC_DAY] = data.isPublicHoliday;
 
-          result['isPublicHoliday'] === true
-            ? (type = 'Public Day')
-            : result['isWorkDay']
-            ? (type = 'Work Day')
-            : (type = 'Free Day');
-          if (res.status === 200) {
-            return await this.repositoryDays.save(
-              new DaysStatus(countryCode, reformDate, type),
-            );
+        if (response.status === 200) {
+          const response = await fetch(
+            `${process.env.URL}isWorkDay&date=${date}&country=${countryCode}`,
+          );
+          const data = await response.json();
+          result[DayType.IS_WORK_DAY] = data.isWorkDay;
+
+          if (
+            result[DayType.IS_PUBLIC_DAY] === true ||
+            result[DayType.IS_WORK_DAY] === true
+          ) {
+            result[DayType.IS_FREE_DAY] = true;
+          }
+
+          result[DayType.IS_PUBLIC_DAY] === true
+            ? (type = DayType.IS_PUBLIC_DAY)
+            : result[DayType.IS_WORK_DAY]
+            ? (type = DayType.IS_WORK_DAY)
+            : (type = DayType.IS_FREE_DAY);
+
+          if (response.status === 200) {
+            const status = this.repositoryDays.create({
+              date: reformatedDate,
+              countryCode,
+              type,
+            });
+            return this.repositoryDays.save(status);
           }
         }
       } catch (error) {
-        throw new Error('Unexpected error occurred');
+        throw new Error(error);
       }
     } else {
-      return query;
+      return dayStatus;
     }
   }
-  async getMaxDays(year: string, countryCode: string) {
-    function dateRange(startDate, endDate) {
-      const dateArray = [];
-      let currentDate = new Date(startDate);
-      while (currentDate <= new Date(endDate)) {
-        const year = currentDate.getFullYear();
-        const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
-        const day = ('0' + currentDate.getDate()).slice(-2);
-        const date = day + '-' + month + '-' + year;
-        dateArray.push(date);
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      return dateArray;
-    }
-    try {
-      const start = new Date(`${year}-01-01`);
-      const end = new Date(`${year}-12-31`);
-      const dates = dateRange(start, end);
-      const obj = await this.repositoryMax.findOne({
-        countryCode: countryCode,
-        year: year,
-      });
-      let data = await this.repositoryDays
-        .createQueryBuilder()
-        .select('days')
-        .from(Days, 'days')
-        .where('days.countryCode = :id', { id: countryCode })
-        .andWhere('days.date like :date', { date: `${year}-%-%` })
-        .orderBy('days.date', 'ASC')
-        .getMany();
-      if (data.length !== 365 && data.length !== 366) {
-        console.log('Uploading data to a Database');
-        dates.map((d) => {
-          this.getDayStatus(d, countryCode);
-        });
-      }
 
-      if (obj) {
-        console.log('Reading from Table max');
-        return obj;
-      } else if (
-        data.length !== 0 &&
-        (data.length === 365 || data.length === 366)
-      ) {
-        const dayStatus = [];
-        for (let i = 0; i < data.length; i++) {
-          dayStatus.push(data[i].type);
-        }
+  async getMaxDays(year: string, countryCode: string): Promise<Max> {
+    async function getDates(date: string, action: string) {
+      const fullDate = new Date(date);
+      action === '+'
+        ? fullDate.setDate(fullDate.getDate() + 1)
+        : fullDate.setDate(fullDate.getDate() - 1);
+      const year = fullDate.getFullYear();
+      const month = ('0' + (fullDate.getMonth() + 1)).slice(-2);
+      const day = ('0' + fullDate.getDate()).slice(-2);
+      const data = day + '-' + month + '-' + year;
+      return data;
+    }
+
+    const maxDays = await this.repositoryMax.findOne({
+      countryCode,
+      year,
+    });
+
+    if (!maxDays) {
+      try {
+        const response = await fetch(
+          `${process.env.URL}getHolidaysForYear&year=${year}&country=${countryCode}&holidayType=public_holiday`,
+        );
+        const data = await response.json();
+
         let max = 0;
-        for (let i = 0; i < dayStatus.length; i++) {
+        for (const obj of data) {
           let count = 0;
-          if (dayStatus[i] === 'Free Day' || dayStatus[i] === 'Public Day') {
+
+          let year = obj.date.year;
+          let month = ('0' + obj.date.month).slice(-2);
+          let day = ('0' + obj.date.day).slice(-2);
+          let date = day + '-' + month + '-' + year;
+
+          let status = await this.getDayStatus(date, countryCode);
+          date = await getDates(status.date, '-');
+
+          const prevDateStatus = await this.getDayStatus(date, countryCode);
+
+          if (prevDateStatus.type === DayType.IS_FREE_DAY) {
             count = 1;
+          }
+
+          while (
+            status.type === DayType.IS_PUBLIC_DAY ||
+            status.type === DayType.IS_FREE_DAY
+          ) {
+            count++;
             if (max < count) max = count;
-            while (
-              dayStatus[i + 1] === 'Free Day' ||
-              dayStatus[i + 1] === 'Public Day'
-            ) {
-              count++;
-              if (max < count) max = count;
-              i++;
-            }
+            date = await getDates(status.date, '+');
+            status = await this.getDayStatus(date, countryCode);
           }
         }
-        return await this.repositoryMax.save(new Max(countryCode, year, max));
+
+        const maximum = this.repositoryMax.create({
+          countryCode,
+          year,
+          max,
+        });
+
+        return this.repositoryMax.save(maximum);
+      } catch (error) {
+        throw new Error(error);
       }
-    } catch (error) {
-      throw new Error('Unexpected error occurred');
+    } else {
+      console.log('Reading from Table max');
+      return maxDays;
     }
   }
 }
