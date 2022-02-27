@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return "Add /api to current url to see documentation"', () => {
+      expect(appController.getHello()).toBe(
+        'Add /api to current url to see documentation',
+      );
     });
   });
 });

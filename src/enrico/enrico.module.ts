@@ -9,6 +9,7 @@ import { Max } from './entities/max.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Countries, Holidays, Days, Max])],
+  exports: [EnricoService],
   controllers: [EnricoController],
   providers: [EnricoService],
 })

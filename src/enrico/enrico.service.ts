@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import fetch from 'cross-fetch';
-import { type } from 'os';
 import { Like, Repository } from 'typeorm';
 import { Countries } from './entities/countries.entity';
 import { Days } from './entities/days.entity';
@@ -22,7 +21,6 @@ export class EnricoService {
 
   async getAllCountries(): Promise<Countries[]> {
     const counter: number = await this.repositoryCountry.count();
-
     if (counter === 0) {
       try {
         const countries: Countries[] = [];
